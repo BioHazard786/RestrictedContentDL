@@ -1,7 +1,7 @@
 FROM python:3.10-alpine
 
 RUN apk update && apk upgrade --no-cache
-RUN apk --no-cache -q add git build-base linux-headers tzdata
+RUN apk --no-cache -q add git build-base linux-headers tzdata ffmpeg
 ENV TZ=Asia/Kolkata
 RUN pip install --no-cache-dir -U pip wheel==0.45.1
 
