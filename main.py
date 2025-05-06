@@ -63,7 +63,7 @@ async def help_command(_, message: Message):
 
 
 @bot.on_message(
-    filters.regex(regex=r"^https?://t\.me/(?:c/\d+/\d+(?:/\d+)?|[^/]+/\d+(?:/\d+)?)$")
+    filters.regex(r"^https?://t\.me/(?:c/\d+/\d+(?:/\d+)?|[^/]+/\d+(?:/\d+)?)$")
     | filters.command("dl") & filters.private
 )
 async def download_media(bot: Client, message: Message):
