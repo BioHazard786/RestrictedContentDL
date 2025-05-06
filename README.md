@@ -85,6 +85,7 @@ docker compose down
 - `/start` – Welcomes the user and gives a brief introduction.
 - `/help` – Provides detailed instructions on how to use the bot.
 - `/dl <post URL>` – Downloads the media from the specified post URL.
+- `<post URL>` – Downloads the media from the specified post URL.
 
 > **Note:** Ensure that the user client is part of the chat from where the media is being downloaded. If the user client is not part of the chat, the bot will not be able to download the file.
 

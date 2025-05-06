@@ -62,13 +62,18 @@ async def help_command(_, message: Message):
     await message.reply(help_text)
 
 
-@bot.on_message(filters.command("dl") & filters.private)
+@bot.on_message(
+    filters.regex(regex=r"^https?://t\.me/(?:c/\d+/\d+(?:/\d+)?|[^/]+/\d+(?:/\d+)?)$")
+    | filters.command("dl") & filters.private
+)
 async def download_media(bot: Client, message: Message):
-    if len(message.command) < 2:
-        await message.reply("**Provide a post URL after the /dl command.**")
-        return
+    if message.command:
+        if len(message.command) < 2:
+            return await message.reply("**Provide a post URL after the /dl command.**")
 
-    post_url = message.command[1]
+        post_url = message.command[1]
+    else:
+        post_url = message.text
 
     try:
         chat_id, message_id = getChatMsgID(post_url)
