@@ -21,6 +21,49 @@ from pyrogram.types import (
 from logger import LOGGER
 
 SIZE_UNITS = ["B", "KB", "MB", "GB", "TB", "PB"]
+VIDEO_THUMB_LOCATION = os.path.join(os.getcwd(), "assets", "video_thumb.jpg")
+VIDEO_SUFFIXES = (
+    ".webm",
+    ".mkv",
+    ".flv",
+    ".vob",
+    ".ogv",
+    ".ogg",
+    ".drc",
+    ".gif",
+    ".gifv",
+    ".mng",
+    ".avi",
+    ".mov",
+    ".qt",
+    ".wmv",
+    ".yuv",
+    ".rm",
+    ".rmvb",
+    ".asf",
+    ".amv",
+    ".mp4",
+    ".m4p",
+    ".m4v",
+    ".mpg",
+    ".mp2",
+    ".mpeg",
+    ".mpe",
+    ".mpv",
+    ".mpg",
+    ".m2v",
+    ".svi",
+    ".3gp",
+    ".3g2",
+    ".mxf",
+    ".roq",
+    ".nsv",
+    ".flv",
+    ".f4v",
+    ".f4p",
+    ".f4a",
+    ".f4b",
+)
 
 
 def get_readable_file_size(size_in_bytes: Optional[float]) -> str:
@@ -70,9 +113,10 @@ async def get_parsed_msg(text, entities):
 
 # Progress bar template
 PROGRESS_BAR = """
-Percentage: {percentage:.2f}% | {current}/{total}
-Speed: {speed}/s
-Estimated Time Left: {est_time} seconds
+**➜ Progress:** `{current}/{total}`
+**➜ Percentage:** `{percentage:.2f}%`
+**➜ Speed:** `{speed}/s`
+**➜ Estimated Time Left:** `{est_time}`
 """
 
 
@@ -137,12 +181,14 @@ async def get_media_info(path):
             ]
         )
     except Exception as e:
-        print(f"Get Media Info: {e}. Mostly File not found! - File: {path}")
+        LOGGER(__name__).error(
+            f"Get Media Info: {e}. Mostly File not found! - File: {path}"
+        )
         return 0, None, None
     if result[0] and result[2] == 0:
         fields = eval(result[0]).get("format")
         if fields is None:
-            print(f"get_media_info: {result}")
+            LOGGER(__name__).info(f"get_media_info: {result}")
             return 0, None, None
         duration = round(float(fields.get("duration", 0)))
         tags = fields.get("tags", {})
@@ -152,8 +198,8 @@ async def get_media_info(path):
     return 0, None, None
 
 
-async def get_video_thumbnail(video_file, duration):
-    output = os.path.join("Assets", "video_thumb.jpg")
+async def get_video_thumbnail(video_file, duration=None):
+    os.makedirs(os.path.join(os.getcwd(), "assets"), exist_ok=True)
     if duration is None:
         duration = (await get_media_info(video_file))[0]
     if duration == 0:
@@ -161,6 +207,7 @@ async def get_video_thumbnail(video_file, duration):
     duration = duration // 2
     cmd = [
         "ffmpeg",
+        "-y",
         "-hide_banner",
         "-loglevel",
         "error",
@@ -176,11 +223,11 @@ async def get_video_thumbnail(video_file, duration):
         "1",
         "-threads",
         f"{os.cpu_count() // 2}",
-        output,
+        VIDEO_THUMB_LOCATION,
     ]
     try:
         _, err, code = await wait_for(cmd_exec(cmd), timeout=60)
-        if code != 0 or not os.path.exists(output):
+        if code != 0 or not os.path.exists(VIDEO_THUMB_LOCATION):
             print(
                 f"Error while extracting thumbnail from video. Name: {video_file} stderr: {err}"
             )
@@ -190,7 +237,7 @@ async def get_video_thumbnail(video_file, duration):
             f"Error while extracting thumbnail from video. Name: {video_file}. Error: Timeout some issues with ffmpeg with specific arch!"
         )
         return None
-    return output
+    return VIDEO_THUMB_LOCATION
 
 
 # Generate progress bar for downloading/uploading
@@ -206,7 +253,9 @@ async def send_media(
     if not await fileSizeLimit(file_size, message, "upload"):
         return
 
-    progress_args = progressArgs("📥 Uploading Progress", progress_message, start_time)
+    progress_args = progressArgs(
+        "**📥 Uploading Progress**", progress_message, start_time
+    )
     LOGGER(__name__).info(f"Uploading media: {media_path} ({media_type})")
 
     if media_type == "photo":
@@ -217,8 +266,6 @@ async def send_media(
             progress_args=progress_args,
         )
     elif media_type == "video":
-        if os.path.exists("Assets/video_thumb.jpg"):
-            os.remove("Assets/video_thumb.jpg")
         duration = (await get_media_info(media_path))[0]
         thumb = await get_video_thumbnail(media_path, duration)
         if thumb is not None and thumb != "none":
@@ -253,9 +300,18 @@ async def send_media(
             progress_args=progress_args,
         )
     elif media_type == "document":
+        if os.path.splitext(media_path)[1] in VIDEO_SUFFIXES:
+            thumb = await get_video_thumbnail(media_path)
+
+            if thumb == "none":
+                thumb = None
+        else:
+            thumb = None
+
         await message.reply_document(
             media_path,
             caption=caption or "",
+            thumb=thumb,
             progress=Leaves.progress_for_pyrogram,
             progress_args=progress_args,
         )

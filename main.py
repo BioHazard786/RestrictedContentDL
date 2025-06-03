@@ -116,7 +116,7 @@ async def download_media(bot: Client, message: Message):
             media_path = await chat_message.download(
                 progress=Leaves.progress_for_pyrogram,
                 progress_args=progressArgs(
-                    "📥 Downloading Progress", progress_message, start_time
+                    "**📥 Downloading Progress**", progress_message, start_time
                 ),
             )
 
@@ -149,12 +149,17 @@ async def download_media(bot: Client, message: Message):
         else:
             await message.reply("**No media or text found in the post URL.**")
 
-    except (PeerIdInvalid, BadRequest, KeyError):
+    except (PeerIdInvalid, BadRequest, KeyError) as ex:
         await message.reply("**Make sure the user client is part of the chat.**")
+        LOGGER(__name__).error(
+            f"Post url: {post_url}\nError while downloading media: {ex}"
+        )
     except Exception as e:
         error_message = f"**❌ {str(e)}**"
         await message.reply(error_message)
-        LOGGER(__name__).error(e)
+        LOGGER(__name__).error(
+            f"Post url: {post_url}\nError while downloading media: {e}"
+        )
 
 
 @bot.on_message(filters.command("stats") & filters.private)
