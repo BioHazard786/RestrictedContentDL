@@ -113,7 +113,7 @@ async def get_parsed_msg(text, entities):
 
 # Progress bar template
 PROGRESS_BAR = """
-**➜ Progress:** `{current}/{total}`
+**➜ Progress:** `{current}` **of** `{total}`
 **➜ Percentage:** `{percentage:.2f}%`
 **➜ Speed:** `{speed}/s`
 **➜ Estimated Time Left:** `{est_time}`
